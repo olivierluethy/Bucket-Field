@@ -1,4 +1,4 @@
-body h1 {
+body h1, body p {
   text-align: center;
 }
 body .chessboard {
@@ -12,13 +12,13 @@ body .chessboard .board {
   grid-template-rows: repeat(10, 40px);
   border: 1px solid black;
 }
-body .chessboard .cell {
+body .chessboard .board .cell {
   width: 40px;
   height: 40px;
   border: 1px solid black;
   cursor: pointer;
   background-color: white;
 }
-body .chessboard .cell:hover {
+body .chessboard .board .cell:hover {
   background-color: black;
 }/*# sourceMappingURL=style.css.map */

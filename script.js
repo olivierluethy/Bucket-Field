@@ -18,6 +18,9 @@ generateChessboard('board2');
 let selectForEnemyCounter = 0;
 let selectedFields = [];
 var botNumbers = [];
+let correctGuessesBot = 0;
+let correctGuessesPlayer = 0;
+var guessedNumbersByBot = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     const cells = document.querySelectorAll("#board2 .cell");
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cells[i].textContent = "X"; // Add the content (X) to each cell
     }
 
-    botNumbers = generatebotNumbers(1, 100, 10);
+    botNumbers = generatebotNumbers(1, 100, 10).map(String);
     console.log("Bot Numbers " + botNumbers);
 });
 
@@ -82,20 +85,63 @@ document.getElementById("board1").addEventListener("click", function(event) {
     }
 });
 
-
 document.getElementById("board2").addEventListener("click", function(event) {
     if (selectForEnemyCounter === 10) {
         if (event.target.classList.contains("cell")) {
-            const clickedCellId = parseInt(event.target.id);
+            const clickedCellId = String(event.target.id); // Convert to string
+            // Check if player guessed correctly
             if (botNumbers.includes(clickedCellId)) {
                 event.target.style.backgroundColor = "gold"; // Change color on left-click
                 alert("You got one!");
+                correctGuessesPlayer++;
+                if(correctGuessesPlayer == 10){
+                    alert("You won the game!");
+                    restartGame();
+                }
             } else {
                 event.target.style.backgroundColor = "black"; // Change color on left-click
             }
         }
+        var botNumber = botGuess(1, 100);
+        // Check if bot guessed correctly
+        var isGuessCorrect = selectedFields.includes(String(botNumber)); // Convert botNumber to string for comparison
+
+        var board1Cells = document.querySelectorAll("#board1 .cell");
+        for (var i = 0; i < board1Cells.length; i++) {
+            if (board1Cells[i].id === String(botNumber)) {
+                if (isGuessCorrect) {
+                    correctGuessesBot++;
+                    board1Cells[i].style.backgroundColor = "gold";
+                    if(correctGuessesBot == 10){
+                        alert("Bot won the game!");
+                        restartGame();
+                    }
+                } else {
+                    board1Cells[i].style.backgroundColor = "royalblue";
+                }
+                break; // Exit the loop since the cell has been found
+            }
+        }
     }
 });
+
+function botGuess(min, max) {
+    var guessNumber = 0;
+
+    if (guessedNumbersByBot.length === 0) {
+        guessNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+        guessedNumbersByBot.push(guessNumber);
+        return guessNumber;
+    } else {
+        do {
+            guessNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+        } while (guessedNumbersByBot.includes(guessNumber));
+
+        guessedNumbersByBot.push(guessNumber);
+        console.log("Bot Guess: " + guessNumber);
+        return guessNumber;
+    }
+}
 
 function generatebotNumbers(min, max, count) {
     var numbers = [];
@@ -109,4 +155,8 @@ function generatebotNumbers(min, max, count) {
     }
 
     return numbers;
+}
+
+function restartGame() {
+    location.reload();
 }
