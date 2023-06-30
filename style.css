@@ -1,0 +1,24 @@
+body h1 {
+  text-align: center;
+}
+body .chessboard {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+body .chessboard .board {
+  display: grid;
+  grid-template-columns: repeat(10, 40px);
+  grid-template-rows: repeat(10, 40px);
+  border: 1px solid black;
+}
+body .chessboard .cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid black;
+  cursor: pointer;
+  background-color: white;
+}
+body .chessboard .cell:hover {
+  background-color: black;
+}/*# sourceMappingURL=style.css.map */
