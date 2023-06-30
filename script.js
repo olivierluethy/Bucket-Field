@@ -57,6 +57,7 @@ document.getElementById("board1").addEventListener("click", function(event) {
                 if (event.which === 1 || event.button === 0) {
                     if (selectForEnemyCounter < 10) {
                         event.target.style.backgroundColor = "red"; // Change color on left-click
+                        event.target.style.transform = 'scale(1)';
                         selectForEnemyCounter++;
                         selectedFields.push(event.target.id); // Add ID of field to selectedFields array
                         if (selectForEnemyCounter === 10) {
@@ -89,37 +90,44 @@ document.getElementById("board2").addEventListener("click", function(event) {
     if (selectForEnemyCounter === 10) {
         if (event.target.classList.contains("cell")) {
             const clickedCellId = String(event.target.id); // Convert to string
-            // Check if player guessed correctly
-            if (botNumbers.includes(clickedCellId)) {
-                event.target.style.backgroundColor = "gold"; // Change color on left-click
-                alert("You got one!");
-                correctGuessesPlayer++;
-                if(correctGuessesPlayer == 10){
-                    alert("You won the game!");
-                    restartGame();
-                }
-            } else {
-                event.target.style.backgroundColor = "black"; // Change color on left-click
+            // If it has already been selected
+            if(event.target.style.backgroundColor === "black" || event.target.style.backgroundColor === "gold"){
+                alert("You have already selected it")
             }
-        }
-        var botNumber = botGuess(1, 100);
-        // Check if bot guessed correctly
-        var isGuessCorrect = selectedFields.includes(String(botNumber)); // Convert botNumber to string for comparison
-
-        var board1Cells = document.querySelectorAll("#board1 .cell");
-        for (var i = 0; i < board1Cells.length; i++) {
-            if (board1Cells[i].id === String(botNumber)) {
-                if (isGuessCorrect) {
-                    correctGuessesBot++;
-                    board1Cells[i].style.backgroundColor = "gold";
-                    if(correctGuessesBot == 10){
-                        alert("Bot won the game!");
+            // If it has not been selected
+            else {
+                // Check if player guessed correctly
+                if (botNumbers.includes(clickedCellId)) {
+                    event.target.style.backgroundColor = "gold"; // Change color on left-click
+                    alert("You got one!");
+                    correctGuessesPlayer++;
+                    if(correctGuessesPlayer == 10){
+                        alert("You won the game!");
                         restartGame();
                     }
                 } else {
-                    board1Cells[i].style.backgroundColor = "royalblue";
+                    event.target.style.backgroundColor = "black"; // Change color on left-click
                 }
-                break; // Exit the loop since the cell has been found
+                var botNumber = botGuess(1, 100);
+                // Check if bot guessed correctly
+                var isGuessCorrect = selectedFields.includes(String(botNumber)); // Convert botNumber to string for comparison
+
+                var board1Cells = document.querySelectorAll("#board1 .cell");
+                for (var i = 0; i < board1Cells.length; i++) {
+                    if (board1Cells[i].id === String(botNumber)) {
+                        if (isGuessCorrect) {
+                            correctGuessesBot++;
+                            board1Cells[i].style.backgroundColor = "gold";
+                            if(correctGuessesBot == 10){
+                                alert("Bot won the game!");
+                                restartGame();
+                            }
+                        } else {
+                            board1Cells[i].style.backgroundColor = "royalblue";
+                        }
+                        break; // Exit the loop since the cell has been found
+                    }
+                }
             }
         }
     }
