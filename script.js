@@ -99,8 +99,8 @@ document.getElementById("board2").addEventListener("click", function(event) {
                 // Check if player guessed correctly
                 if (botNumbers.includes(clickedCellId)) {
                     event.target.style.backgroundColor = "gold"; // Change color on left-click
-                    alert("You got one!");
                     correctGuessesPlayer++;
+                    alert("You got one!\n" + (10 - correctGuessesPlayer) + " left");
                     if(correctGuessesPlayer == 10){
                         alert("You won the game!");
                         restartGame();
