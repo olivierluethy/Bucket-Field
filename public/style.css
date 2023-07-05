@@ -1,0 +1,82 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+body h1, body p {
+  text-align: center;
+}
+body .chessboard {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+body .chessboard .board {
+  display: grid;
+  grid-template-columns: repeat(10, 40px);
+  grid-template-rows: repeat(10, 40px);
+  border: 1px solid black;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+body .chessboard .board .cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid black;
+  cursor: pointer;
+  background-color: white;
+  font-size: 2rem;
+  text-align: center;
+  transition: 0.2s;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-name: xfadeout;
+  animation-delay: 1s;
+  transition: transform 0.17s ease-in-out;
+}
+body .chessboard .board .cell:active {
+  transform: scale(2);
+}
+body .chessboard .board .cell:hover {
+  background-color: black;
+}
+body .chessboard #board1 {
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-name: xfadeouIn;
+}
+body .chessboard #board2 {
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-name: xfadeouOut;
+}
+
+@keyframes xfadeout {
+  0% {
+    font-size: 1px;
+    rotate: 180deg;
+  }
+  100% {
+    font-size: 2rem;
+  }
+}
+@keyframes xfadeouIn {
+  0% {
+    transform: translateX(-200rem) rotate(600deg);
+    position: absolute;
+    /* Define initial styles for element 1 */
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+    /* Define final styles for element 1 */
+  }
+}
+@keyframes xfadeouOut {
+  0% {
+    transform: translateX(200rem) rotate(600deg);
+    position: absolute;
+    /* Define initial styles for element 2 */
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+    /* Define final styles for element 2 */
+  }
+}/*# sourceMappingURL=style.css.map */

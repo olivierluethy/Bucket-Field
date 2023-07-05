@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="../style.css">
+    <script src="singleplayer.js" defer></script>
+    <script src="/socket.io/socket.io.js" defer></script>
+</head>
+<body>
+    <h1>Bucket Game</h1>
+    <p>1. Player places the points</p>
+    <p>2. After setting 10, you guess on the right side where the bot might have placed</p>
+    <p>3. While you guess, you see on the left, what the bot is guessing and how far he is</p>
+    <p>4. Who first finds all 10 wins</p>
+  <div class="chessboard">
+    <div class="board" id="board1"></div>
+    <div class="board" id="board2"></div>
+  </div>
+</body>
+</html>
