@@ -57,7 +57,10 @@ document.getElementById("board1").addEventListener("click", function (event) {
             event.target.style.transform = "scale(1)";
             selectForEnemyCounter++;
             selectedFields.push(event.target.id); // Add ID of field to selectedFields array
+            socket.emit('selectField', event.target.id);
             if (selectForEnemyCounter === 10) {
+                socket.emit("waitForPlayer"); // When player already select 10 he must wait for the other
+
               const cells = document.querySelectorAll("#board2 .cell");
               for (let i = 0; i < cells.length; i++) {
                 cells[i].textContent = ""; // Clear the content (X) of each cell
@@ -80,7 +83,7 @@ document.getElementById("board1").addEventListener("click", function (event) {
       }
     }
   } else {
-    alert("You can't make any changes!");
+    //alert("You can't make any changes!");
   }
 });
 
