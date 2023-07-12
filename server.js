@@ -60,7 +60,6 @@ io.on('connection', (socket) => {
     }
 })
 
-
   // Handle game events here
   socket.on('selectField', (fieldId) => {
     // Store the selected field for the player
@@ -118,6 +117,9 @@ io.on('connection', (socket) => {
     socket.emit("enableReadyButton", { playerId: socket.id });
 });
 
+socket.on("readyPlayerOne", ()=>{
+  socket.broadcast.emit("startCountdown");
+})
   
   socket.on("opponentReady", function(opponentSelectedFields) {
     if (opponentSelectedFields.length === 10) {

@@ -24,12 +24,6 @@ let selectedFields = [];
 let correctGuessesPlayer = 0;
 let correctGuessesOpponent = 0;
 
-// Button for the player to indicate readiness
-const readyButton = document.getElementById("readyButton");
-readyButton.addEventListener("click", () => {
-  socket.emit("playerReady", selectedFields); // Send the selected fields to the server
-});
-
 socket.on("waitForOpponent", (playerId) => {
   if (playerId === socket.id) {
     alert("Wait for the opponent to finish selecting fields");
@@ -67,7 +61,6 @@ socket.on("playerWin", () => {
 document
   .getElementById("board1")
   .addEventListener("contextmenu", function (event) {
-    if (selectForEnemyCounter !== 10) {
       event.preventDefault(); // Prevent context menu from appearing
       if (event.target.classList.contains("cell")) {
         if (event.target.style.backgroundColor === "red") {
@@ -78,59 +71,78 @@ document
           alert("You can only change if it's selected!");
         }
       }
-    }
   });
 
   // socket.on('receive-field', fieldId =>{
   //   document.getElementById(fieldId).style.backgroundColor = "red"; // Change color on left-click
   // })
 
-document.getElementById("board1").addEventListener("click", function (event) {
-  if (selectForEnemyCounter !== 10) {
+  document.getElementById("board1").addEventListener("click", function (event) {
     if (event.target.classList.contains("cell")) {
-      if (
-        event.target.style.backgroundColor === "white" ||
-        event.target.style.backgroundColor === ""
-      ) {
-        if (event.which === 1 || event.button === 0) {
-          if (selectForEnemyCounter < 10) {
-            event.target.style.backgroundColor = "red"; // Change color on left-click
-            event.target.style.transform = "scale(1)";
-            selectForEnemyCounter++;
-            selectedFields.push(event.target.id); // Add ID of field to selectedFields array
+        if (event.target.style.backgroundColor === "white" || event.target.style.backgroundColor === "") {
+            if (event.which === 1 || event.button === 0) {
+                if (selectForEnemyCounter < 10) {
+                    event.target.style.backgroundColor = "red"; // Change color on left-click
+                    event.target.style.transform = "scale(1)";
+                    selectForEnemyCounter++;
+                    selectedFields.push(event.target.id); // Add ID of field to selectedFields array
 
-            socket.emit('send-field', event.target.id);
+                    socket.emit('send-field', event.target.id);
 
-            if (selectForEnemyCounter === 10) {
+                    if (selectForEnemyCounter === 10) {
 
-              socket.emit("playerReady", selectedFields); // When player already select 10 he must wait for the other
+                        socket.emit("playerReady", selectedFields); // When player already select 10 he must wait for the other
 
-              readyButton.disabled = false; // Enable the button
-              const cells = document.querySelectorAll("#board2 .cell");
-              for (let i = 0; i < cells.length; i++) {
-                cells[i].textContent = ""; // Clear the content (X) of each cell
-              }
-              const fieldGray = document.querySelectorAll("#board1 .cell");
-              for (let i = 0; i < fieldGray.length; i++) {
-                if (fieldGray[i].style.backgroundColor === "red") {
-                  fieldGray[i].style.backgroundColor = "gray"; // Change color to gray
+                        readyButton.disabled = false; // Enable the button
+                        const cells = document.querySelectorAll("#board2 .cell");
+                        for (let i = 0; i < cells.length; i++) {
+                            cells[i].textContent = ""; // Clear the content (X) of each cell
+                        }
+                        console.log("Selected fields:", selectedFields);
+                        socket.emit("selectField", selectedFields); // Send the selected fields to the server
+                    }
+                } else {
+                    alert("You can't select more than 10!\nPress ready if you don't want to make a change.");
                 }
-              }
-              console.log("Selected fields:", selectedFields);
-              socket.emit("selectField", selectedFields); // Send the selected fields to the server
             }
-          } else {
-            alert("You can't select more than 10!");
-          }
+        } else if (event.target.style.backgroundColor === "red") {
+            alert("This field has already been selected!");
         }
-      } else if (event.target.style.backgroundColor === "red") {
-        alert("This field has already been selected!");
-      }
     }
-  } else {
-    //alert("You can't make any changes!");
+});
+
+let countdownTimer;
+
+function startCountdown() {
+  let timeLeft = 10;
+  countdownTimer = setInterval(() => {
+      document.getElementById("countdown").textContent = timeLeft;
+      timeLeft--;
+      if (timeLeft < 0) {
+          clearInterval(countdownTimer);
+          // Time is up, do something here
+          // Remove the player's selected fields from the storage
+          alert("AFK Timeout!")
+          location.reload();
+      }
+  }, 1000);
+}
+
+// Button for the player to indicate readiness
+let readyButton = document.getElementById("readyButton");
+readyButton.addEventListener("click", () => {
+  socket.emit("readyPlayerOne"); // Send the selected fields to the server
+  const fieldGray = document.querySelectorAll("#board1 .cell");
+  for (let i = 0; i < fieldGray.length; i++) {
+    if (fieldGray[i].style.backgroundColor === "red") {
+      fieldGray[i].style.backgroundColor = "gray"; // Change color to gray
+    }
   }
 });
+
+socket.on("startCountdown", ()=>{
+  startCountdown();
+})
 
 socket.on("waitForPlayer", (playerId) => {
   if (playerId === socket.id) {
@@ -165,9 +177,16 @@ socket.on("sendAlert", function(data) {
 
 socket.on("enableReadyButton", function(data){
   if (data.playerId === socket.id){
-    document.getElementById(readyButton).disabled = false;
+    document.getElementById("readyButton").disabled = false;
+    document.getElementById("readyButton").style.cursor ="pointer";
+    document.getElementById("readyButton").style.backgroundColor ="white";
   }
 })
+
+function stopCountdown() {
+  clearInterval(countdownTimer);
+  document.getElementById("countdown").textContent = "";
+}
 
 socket.on("opponentFields", function (opponentSelectedFields) {
   console.log("Opponent selected fields:", opponentSelectedFields);
