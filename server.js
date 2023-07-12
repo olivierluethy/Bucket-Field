@@ -27,7 +27,7 @@ io.on('connection', (socket) => {
       selectedFields[playerId] = [];
     }
     selectedFields[playerId].push(fieldId);
-
+  
     // Check if both players have finished selecting their fields
     const playerIds = Object.keys(selectedFields);
     if (playerIds.length === 2 && selectedFields[playerIds[0]].length === 10 && selectedFields[playerIds[1]].length === 10) {
@@ -36,12 +36,14 @@ io.on('connection', (socket) => {
       const player2Fields = selectedFields[playerIds[1]];
       io.to(playerIds[0]).emit('opponentFields', player2Fields);
       io.to(playerIds[1]).emit('opponentFields', player1Fields);
+    } else if (playerIds.length === 2 && selectedFields[playerId].length === 10) {
+      // Emit an event to the player who has finished selecting
+      socket.emit('waitForOpponent', playerId);
+    } else {
+      // Emit an event to the player who is still selecting
+      socket.emit('continueSelection');
     }
-  });
-
-  socket.on("waitForPlayer", (playerId) => {
-    alert("Wait for other player to get finished");
-  })
+  });  
 
   // Add more events to control the game
   socket.on('guessField', (fieldId) => {
@@ -78,14 +80,14 @@ io.on('connection', (socket) => {
     }
   });
   
-  socket.on("playerComplete", function() {
+  socket.on("playerComplete", function () {
     // Display a message or perform any actions to indicate that the player has completed the selection
-    alert("You have completed the selection!");
+    socket.emit("waitForOpponent", socket.id); // Notify the player to wait for the opponent
   });
   
-  socket.on("opponentComplete", function() {
+  socket.on("opponentComplete", function () {
     // Display a message or perform any actions to indicate that the opponent has completed the selection
-    alert("Your opponent has completed the selection!");
+    socket.broadcast.emit("opponentComplete"); // Notify the opponent that the player has completed the selection
   });
   
   socket.on('disconnect', () => {

@@ -24,6 +24,46 @@ let selectedFields = [];
 let correctGuessesPlayer = 0;
 let correctGuessesOpponent = 0;
 
+// Button for the player to indicate readiness
+const readyButton = document.getElementById("readyButton");
+readyButton.addEventListener("click", () => {
+  socket.emit("playerReady", selectedFields); // Send the selected fields to the server
+});
+
+socket.on("waitForOpponent", (playerId) => {
+  if (playerId === socket.id) {
+    alert("Wait for the opponent to finish selecting fields");
+  }
+});
+
+socket.on("continueSelection", () => {
+  // Opponent is still selecting fields, continue the game
+});
+
+socket.on("opponentComplete", () => {
+  // Opponent has completed the field selection
+  alert("Your opponent has completed the field selection!");
+});
+
+socket.on("playerComplete", () => {
+  // Player has completed the field selection
+  alert("You have completed the field selection!");
+});
+
+socket.on("opponentFields", (opponentSelectedFields) => {
+  // ... your code for handling opponent's selected fields ...
+});
+
+socket.on("opponentWin", () => {
+  // Opponent has won the game
+  alert("Your opponent has won the game!");
+});
+
+socket.on("playerWin", () => {
+  // Player has won the game
+  alert("You have won the game!");
+});
+
 document
   .getElementById("board1")
   .addEventListener("contextmenu", function (event) {
@@ -60,7 +100,7 @@ document.getElementById("board1").addEventListener("click", function (event) {
             socket.emit('selectField', event.target.id);
             if (selectForEnemyCounter === 10) {
                 socket.emit("waitForPlayer"); // When player already select 10 he must wait for the other
-
+                readyButton.disabled = false; // Enable the button
               const cells = document.querySelectorAll("#board2 .cell");
               for (let i = 0; i < cells.length; i++) {
                 cells[i].textContent = ""; // Clear the content (X) of each cell
@@ -84,6 +124,12 @@ document.getElementById("board1").addEventListener("click", function (event) {
     }
   } else {
     //alert("You can't make any changes!");
+  }
+});
+
+socket.on("waitForPlayer", (playerId) => {
+  if (playerId === socket.id) {
+    alert("Wait for the other player to finish");
   }
 });
 
