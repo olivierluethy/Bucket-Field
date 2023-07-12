@@ -15,16 +15,43 @@ const selectedFields = {};
 // Object to store guessed fields for each player
 const guessedFields = {};
 
+const playerSockets = {};
+
 io.on('connection', (socket) => {
   const playerId = socket.id; // Generate a unique ID for the player
+
+  // Spieler-ID und zugehörige Socket-ID speichern
+  playerSockets[playerId] = socket;
 
   console.log(`Spieler mit ID ${playerId} hat eine Verbindung hergestellt.`);
 
 
   socket.on("send-field", (fieldId) => {
-    socket.broadcast.emit("receive-field", fieldId)
-    console.log(fieldId);
-  })
+    // Broadcast the selected field to all other players
+    // socket.broadcast.emit("receive-field", fieldId);
+  
+    // Store the selected field for the player
+    if (!selectedFields[socket.id]) {
+      selectedFields[socket.id] = [];
+    }
+    selectedFields[socket.id].push(fieldId);
+  
+    console.log(socket.id + " selected: " + fieldId);
+    console.log("Selected fields:", selectedFields[socket.id]);
+  });
+
+  socket.on("remove-field", (fieldId) => {
+    // Remove the selected field for the player
+    if (selectedFields[socket.id]) {
+        const index = selectedFields[socket.id].indexOf(fieldId);
+        if (index > -1) {
+            selectedFields[socket.id].splice(index, 1);
+            console.log(socket.id + " deletes: " + fieldId);
+            console.log("Selected fields:", selectedFields[socket.id]);
+        }
+    }
+})
+
 
   // Handle game events here
   socket.on('selectField', (fieldId) => {
@@ -86,9 +113,15 @@ io.on('connection', (socket) => {
     }
   });
   
-  socket.on("playerComplete", function () {
+  socket.on("playerComplete", function() {
     // Display a message or perform any actions to indicate that the player has completed the selection
-    socket.emit("waitForOpponent", socket.id); // Notify the player to wait for the opponent
+    socket.emit("sendAlert", { playerId: socket.id, message: "You have completed the selection\nYour opponent is still selecting!" });
+
+    // Check if both players have completed the selection
+    const playerIds = Object.keys(selectedFields);
+    if (playerIds.length === 2) {
+      // Both players have completed the selection, you can perform further actions here
+    }
   });
   
   socket.on("opponentComplete", function () {
@@ -99,7 +132,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Spieler mit ID ${playerId} hat die Verbindung getrennt.`);
     // Remove the player's selected fields from the storage
-    delete selectedFields[playerId];
+    delete playerSockets[playerId];
   });
 });
 

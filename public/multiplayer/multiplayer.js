@@ -73,10 +73,7 @@ document
         if (event.target.style.backgroundColor === "red") {
           event.target.style.backgroundColor = "white"; // Change color on right-click
           selectForEnemyCounter--;
-          const index = selectedFields.indexOf(event.target.id);
-          if (index !== -1) {
-            selectedFields.splice(index, 1); // Remove ID from selectedFields array
-          }
+          socket.emit('remove-field', event.target.id); // Remove ID from selectedFields array);
         } else {
           alert("You can only change if it's selected!");
         }
@@ -84,9 +81,9 @@ document
     }
   });
 
-  socket.on('receive-field', fieldId =>{
-    document.getElementById(fieldId).style.backgroundColor = "red"; // Change color on left-click
-  })
+  // socket.on('receive-field', fieldId =>{
+  //   document.getElementById(fieldId).style.backgroundColor = "red"; // Change color on left-click
+  // })
 
 document.getElementById("board1").addEventListener("click", function (event) {
   if (selectForEnemyCounter !== 10) {
@@ -105,8 +102,10 @@ document.getElementById("board1").addEventListener("click", function (event) {
             socket.emit('send-field', event.target.id);
 
             if (selectForEnemyCounter === 10) {
-                socket.emit("waitForPlayer"); // When player already select 10 he must wait for the other
-                readyButton.disabled = false; // Enable the button
+
+              socket.emit("playerReady", selectedFields); // When player already select 10 he must wait for the other
+
+              readyButton.disabled = false; // Enable the button
               const cells = document.querySelectorAll("#board2 .cell");
               for (let i = 0; i < cells.length; i++) {
                 cells[i].textContent = ""; // Clear the content (X) of each cell
@@ -155,6 +154,12 @@ document.getElementById("board2").addEventListener("click", function (event) {
         socket.emit("guessField", clickedCellId); // Send the guessed cell ID to the server
       }
     }
+  }
+});
+
+socket.on("sendAlert", function(data) {
+  if (data.playerId === socket.id) {
+    alert(data.message);
   }
 });
 
