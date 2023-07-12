@@ -17,6 +17,8 @@ const guessedFields = {};
 
 const playerSockets = {};
 
+let playerSelectedCount = {};
+
 io.on('connection', (socket) => {
   const playerId = socket.id; // Generate a unique ID for the player
 
@@ -35,6 +37,11 @@ io.on('connection', (socket) => {
       selectedFields[socket.id] = [];
     }
     selectedFields[socket.id].push(fieldId);
+    playerSelectedCount[socket.id]++;
+
+    if (playerSelectedCount[socket.id] === 10) {
+      socket.emit("playerReady");
+    }
   
     console.log(socket.id + " selected: " + fieldId);
     console.log("Selected fields:", selectedFields[socket.id]);
@@ -48,6 +55,7 @@ io.on('connection', (socket) => {
             selectedFields[socket.id].splice(index, 1);
             console.log(socket.id + " deletes: " + fieldId);
             console.log("Selected fields:", selectedFields[socket.id]);
+            playerSelectedCount[socket.id]--;
         }
     }
 })
@@ -101,11 +109,15 @@ io.on('connection', (socket) => {
     alert("A player won this game!");
   })
 
-  socket.on("playerReady", function(selectedFields) {
-    if (selectedFields.length === 10) {
-      socket.emit("playerComplete"); // Notify the server that the player has completed the selection
-    }
-  });
+  // socket.on("playerReady", function(selectedFields) {
+  //   if (selectedFields.length === 10) {
+  //     socket.emit("playerComplete"); // Notify the server that the player has completed the selection
+  //   }
+  // });
+  socket.on("playerReady", () => {
+    socket.emit("enableReadyButton", { playerId: socket.id });
+});
+
   
   socket.on("opponentReady", function(opponentSelectedFields) {
     if (opponentSelectedFields.length === 10) {

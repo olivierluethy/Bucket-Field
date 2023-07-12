@@ -163,6 +163,12 @@ socket.on("sendAlert", function(data) {
   }
 });
 
+socket.on("enableReadyButton", function(data){
+  if (data.playerId === socket.id){
+    document.getElementById(readyButton).disabled = false;
+  }
+})
+
 socket.on("opponentFields", function (opponentSelectedFields) {
   console.log("Opponent selected fields:", opponentSelectedFields);
 });
