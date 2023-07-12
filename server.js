@@ -20,6 +20,12 @@ io.on('connection', (socket) => {
 
   console.log(`Spieler mit ID ${playerId} hat eine Verbindung hergestellt.`);
 
+
+  socket.on("send-field", (fieldId) => {
+    socket.broadcast.emit("receive-field", fieldId)
+    console.log(fieldId);
+  })
+
   // Handle game events here
   socket.on('selectField', (fieldId) => {
     // Store the selected field for the player

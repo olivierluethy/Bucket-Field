@@ -84,6 +84,10 @@ document
     }
   });
 
+  socket.on('receive-field', fieldId =>{
+    document.getElementById(fieldId).style.backgroundColor = "red"; // Change color on left-click
+  })
+
 document.getElementById("board1").addEventListener("click", function (event) {
   if (selectForEnemyCounter !== 10) {
     if (event.target.classList.contains("cell")) {
@@ -97,7 +101,9 @@ document.getElementById("board1").addEventListener("click", function (event) {
             event.target.style.transform = "scale(1)";
             selectForEnemyCounter++;
             selectedFields.push(event.target.id); // Add ID of field to selectedFields array
-            socket.emit('selectField', event.target.id);
+
+            socket.emit('send-field', event.target.id);
+
             if (selectForEnemyCounter === 10) {
                 socket.emit("waitForPlayer"); // When player already select 10 he must wait for the other
                 readyButton.disabled = false; // Enable the button
