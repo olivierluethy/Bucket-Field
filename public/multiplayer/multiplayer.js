@@ -23,6 +23,7 @@ let selectForEnemyCounter = 0;
 let selectedFields = [];
 let correctGuessesPlayer = 0;
 let correctGuessesOpponent = 0;
+let countdownStarted = false;
 
 socket.on("waitForOpponent", (playerId) => {
   if (playerId === socket.id) {
@@ -73,10 +74,6 @@ document
       }
   });
 
-  // socket.on('receive-field', fieldId =>{
-  //   document.getElementById(fieldId).style.backgroundColor = "red"; // Change color on left-click
-  // })
-
   document.getElementById("board1").addEventListener("click", function (event) {
     if (event.target.classList.contains("cell")) {
         if (event.target.style.backgroundColor === "white" || event.target.style.backgroundColor === "") {
@@ -117,13 +114,14 @@ function startCountdown() {
   let timeLeft = 10;
   countdownTimer = setInterval(() => {
       document.getElementById("countdown").textContent = timeLeft;
+      document.getElementById("readyButton").style.backgroundColor="white";
       timeLeft--;
       if (timeLeft < 0) {
           clearInterval(countdownTimer);
           // Time is up, do something here
           // Remove the player's selected fields from the storage
-          alert("AFK Timeout!")
-          location.reload();
+          // alert("AFK Timeout!")
+          // location.reload();
       }
   }, 1000);
 }
@@ -131,7 +129,10 @@ function startCountdown() {
 // Button for the player to indicate readiness
 let readyButton = document.getElementById("readyButton");
 readyButton.addEventListener("click", () => {
-  socket.emit("readyPlayerOne"); // Send the selected fields to the server
+  if (!countdownStarted) {
+    countdownStarted = true;
+    startCountdown();
+  }
   const fieldGray = document.querySelectorAll("#board1 .cell");
   for (let i = 0; i < fieldGray.length; i++) {
     if (fieldGray[i].style.backgroundColor === "red") {
@@ -139,10 +140,6 @@ readyButton.addEventListener("click", () => {
     }
   }
 });
-
-socket.on("startCountdown", ()=>{
-  startCountdown();
-})
 
 socket.on("waitForPlayer", (playerId) => {
   if (playerId === socket.id) {

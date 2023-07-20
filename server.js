@@ -115,11 +115,18 @@ io.on('connection', (socket) => {
   // });
   socket.on("playerReady", () => {
     socket.emit("enableReadyButton", { playerId: socket.id });
+
+    // Check if both players are ready
+    const playerIds = Object.keys(selectedFields);
+    if (playerIds.length === 2) {
+      io.emit("playersReady"); // Notify both players that they are ready to start the game
+    }
 });
 
-socket.on("readyPlayerOne", ()=>{
-  socket.broadcast.emit("startCountdown");
-})
+socket.on("playersReady", () => {
+  // Perform any actions to start the game or display a message
+  alert("Both players have completed the selection. The game is starting!");
+});
   
   socket.on("opponentReady", function(opponentSelectedFields) {
     if (opponentSelectedFields.length === 10) {
