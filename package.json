@@ -1,4 +1,11 @@
 {
+  "name": "bucket-field",
+  "version": "1.0.0",
+  "description": "GRID// — a neon arcade of grid selection & guessing games (Rotation Memory, Mirror Memory, vs Bot, and real-time Multiplayer).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.1"
