@@ -1,13 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="/socket.io/socket.io.js" defer></script>
-    <title>MENU</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="/css/menu.css" />
+  <title>GRID// — select · transform · deduce</title>
 </head>
 <body>
-    <a href="singleplayer/singleplayer.html"><button>Singleplayer</button></a>
-    <a href="multiplayer/multiplayer.html"><button>Multiplayer</button></a>
+  <div class="menu">
+
+    <!-- BOOT -->
+    <section class="screen active" id="screen-boot">
+      <div class="hero">
+        <div class="title">GRID//</div>
+        <div class="subtitle">select · transform · deduce</div>
+        <button class="btn lg primary start" data-goto="path">Enter ►</button>
+        <div class="hint">press ENTER</div>
+      </div>
+    </section>
+
+    <!-- CHOOSE PATH -->
+    <section class="screen" id="screen-path">
+      <div class="menu-head">
+        <h2>Choose your arena</h2>
+        <p>solo puzzles &amp; a deducing bot — or a live duel</p>
+      </div>
+      <div class="card-row">
+        <div class="pathcard" data-goto="single">
+          <div class="ic">◈</div>
+          <h3>Single Player</h3>
+          <p>Rotation &amp; Mirror memory puzzles and a deduction duel vs a smart bot.</p>
+        </div>
+        <div class="pathcard magenta" data-goto="multi">
+          <div class="ic">⚔</div>
+          <h3>Multiplayer</h3>
+          <p>Create a session, share the link, and out-deduce a friend in real time.</p>
+        </div>
+      </div>
+      <button class="btn ghost back" data-goto="boot">◄ Back</button>
+    </section>
+
+    <!-- SINGLE PLAYER MODES -->
+    <section class="screen" id="screen-single">
+      <div class="menu-head">
+        <h2>Single Player</h2>
+        <p>pick a mode</p>
+      </div>
+      <div class="mode-grid">
+        <article class="modecard" data-play="/modes/memory.html?mode=rotate">
+          <div class="preview rotate" data-cells="0,2,4"></div>
+          <span class="tag">★ Star mode</span>
+          <h3>Rotation Memory</h3>
+          <p>Memorise a pattern, watch the grid rotate, then click where the cells land. Escalating levels.</p>
+          <span class="btn primary">Play ►</span>
+        </article>
+
+        <article class="modecard" data-play="/modes/memory.html?mode=mirror">
+          <div class="preview mirror" data-cells="0,3,6"></div>
+          <span class="tag">Reflex</span>
+          <h3>Mirror Memory</h3>
+          <p>Same idea, mirrored. The grid flips across an axis — re-select the reflected positions.</p>
+          <span class="btn primary">Play ►</span>
+        </article>
+
+        <article class="modecard" data-play="/modes/bot.html">
+          <div class="preview bot" data-cells="1,4" data-nums="2:3,7:1"></div>
+          <span class="tag">Vs Bot</span>
+          <h3>Deduction Duel</h3>
+          <p>Hide treasures, read proximity clues, and race a deducing bot to uncover all ten first.</p>
+          <span class="btn primary">Play ►</span>
+        </article>
+      </div>
+      <button class="btn ghost back" data-goto="path">◄ Back</button>
+    </section>
+
+    <!-- MULTIPLAYER -->
+    <section class="screen" id="screen-multi">
+      <div class="menu-head">
+        <h2>Multiplayer</h2>
+        <p>real-time · head to head</p>
+      </div>
+      <article class="modecard wide" data-play="/modes/multiplayer.html">
+        <div class="preview versus" data-cells="0,4,8"></div>
+        <span class="tag">⚔ Versus</span>
+        <h3>Deduction Duel — Online</h3>
+        <p>Create a session to get a shareable code &amp; link. Your opponent joins, you both hide treasures, then alternate probing until someone finds all ten. Fully synced, with reconnection.</p>
+        <span class="btn magenta">Enter lobby ►</span>
+      </article>
+      <button class="btn ghost back" data-goto="path">◄ Back</button>
+    </section>
+
+  </div>
+
+  <script src="/js/menu.js"></script>
 </body>
 </html>
