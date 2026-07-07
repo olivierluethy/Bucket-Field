@@ -90,7 +90,9 @@ see `snapshotFor()` in `server.js` and the protocol table in `docs/DEVELOPER.md`
 | Add a menu entry / mode card | `index.html` + `public/js/menu.js` |
 | Add a new single-player mode | new `public/modes/*.html` + `public/js/*.js`, reuse `Grid`/`ui.js`, link from the menu |
 
-## Known stale artifact
+## Diagram
 
-`diagram/` holds the **original** flow chart from before the rebuild. It documents the old
-(broken) design and is **out of date** — do not treat it as authoritative.
+`diagram/GRID Architecture and Flow.drawio` is the **current** architecture & flow chart
+(open at [app.diagrams.net](https://app.diagrams.net)): the menu, both single-player loops, and
+the server-authoritative multiplayer exchange incl. reconnection. Keep it in sync with `server.js`
+if you change the protocol.

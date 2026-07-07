@@ -56,7 +56,7 @@ Bucket-Field/
 │       ├── memory.html       # page for rotation/mirror
 │       ├── bot.html          # page for vs-bot
 │       └── multiplayer.html  # lobby + game for online play
-└── diagram/                  # LEGACY flow chart from the pre-rebuild design (out of date)
+└── diagram/                  # GRID Architecture and Flow.drawio — current architecture & flow chart
 ```
 
 ### Static hosting model (important)
@@ -346,5 +346,6 @@ Edit the constants and handlers in `server.js` and mirror any new snapshot field
 - **No inline colours for state.** Use the documented cell classes.
 - **`socket.id` is not identity.** Use the per-tab `token`.
 - **Links go to `/`,** not `../../index.html`.
-- **`diagram/` is stale.** It documents the pre-rebuild (broken) design; update or ignore it.
+- **`diagram/GRID Architecture and Flow.drawio`** is the current architecture/flow chart (draw.io);
+  update it alongside protocol changes.
 - **`node_modules/` is committed.** Don't let ad-hoc installs sneak into commits.
