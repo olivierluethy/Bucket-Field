@@ -1,61 +1,59 @@
-# Bucket Game
+# GRID//
 
-The Bucket Game is a multiplayer game where two players take turns selecting fields to uncover hidden points. The first player to find all 10 points wins the game.
+A neon arcade of grid selection, transformation and deduction games — built on the
+original "Bucket Field" idea (pick cells on a grid, then reproduce the pattern under a
+challenge). Single-player puzzles, a deducing bot, and real-time head-to-head multiplayer.
+
+## Modes
+
+- **Rotation Memory** *(star mode)* — memorise a pattern, watch the grid rotate, then click
+  where the cells land in their **rotated** positions. Perfect rounds escalate the difficulty
+  (bigger grids, more cells, larger rotations), with lives, a streak multiplier and a saved best score.
+- **Mirror Memory** — the same engine with a mirror/flip transform across an axis.
+- **Deduction Duel (vs Bot)** — you and the bot each hide 10 treasures on an 8×8 grid and
+  alternate probing. Every probe reveals a hit (★) or a **proximity number** (treasures among
+  the 8 neighbours). Read the clues to deduce locations — the bot runs a constraint/probability
+  solver and deduces too. First to find all 10 wins.
+- **Multiplayer (Deduction Duel online)** — create a session to get a shareable **code + link**;
+  a friend joins and you play the duel head-to-head. The server is authoritative (it validates
+  every probe, computes hits/proximity, enforces turns and pushes a full state snapshot to both
+  clients), so the two sides can never desync. Dropped players **reconnect** within a grace window.
 
 ## Installation
 
-1. Make sure you have [Node.js](https://nodejs.org) installed on your system.
+```bash
+git clone https://github.com/olivierluethy/Bucket-Field/
+cd Bucket-Field
+npm install
+```
 
-2. Clone the repository to your local machine:
+## Run
 
-   ```bash
-   git clone https://github.com/olivierluethy/Bucket-Field/
-   ```
+```bash
+npm start
+```
 
-3. Navigate to the project directory:
+Then open `http://localhost:3000` and hit **Enter** to start. (Set `PORT` to use another port.)
 
-   ```bash
-   cd bucket-game
-   ```
+To play multiplayer on one machine, open the invite link in a second browser tab/window.
 
-4. Install the dependencies:
+## Architecture
 
-   ```bash
-   npm install
-   ```
-
-## Execution
-
-1. Start the server:
-
-   ```bash
-   npm start
-   ```
-
-   The server will start on port 3000. Make sure this port is not being used by another process.
-
-2. Open a web browser and navigate to `http://localhost:3000`.
-
-3. Choose either the Singleplayer or Multiplayer mode.
-
-4. In Singleplayer mode, you can play the game against a computer opponent. In Multiplayer mode, you can play against another connected player.
-
-5. In the game, you will be prompted to take turns selecting fields by clicking on them. Try to uncover the hidden points.
-
-6. The game will show you the progress and inform you of the winner once one of the players has found all 10 points.
+- **`server.js`** — Express + Socket.IO. Owns all multiplayer state in per-room objects;
+  validates moves, computes results, and broadcasts per-player snapshots. Serves `public/`.
+- **`public/css/`** — `app.css` (shared arcade design system) and `menu.css`.
+- **`public/js/`** — `grid.js` (reusable grid + rotate/mirror geometry), `ui.js` (toast/overlay,
+  no `alert()`), and one script per mode (`memory.js`, `bot.js`, `multiplayer.js`, `menu.js`).
+- **`public/modes/`** — the game pages. `index.html` is the immersive menu.
 
 ## Technologies
 
-- HTML
-- CSS
-- JavaScript
-- Node.js
-- Express.js
-- Socket.IO
+HTML · CSS · JavaScript · Node.js · Express · Socket.IO
 
 ## Authors
 
 - [Olivier Lüthy](https://github.com/olivierluethy)
 
 ## License
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+Licensed under the [MIT License](https://opensource.org/licenses/MIT).

@@ -195,7 +195,7 @@
         youWon ? `You found all ${K} first.` : `${s.opponent.joined ? s.opponent.name : "Opponent"} found all ${K} first.`,
         [
           { label: "Rematch", kind: "primary", onClick: () => socket.emit("rematch") },
-          { label: "Menu", kind: "ghost", onClick: () => (location.href = "../../index.html") },
+          { label: "Menu", kind: "ghost", onClick: () => (location.href = "/") },
         ]);
     }
   }

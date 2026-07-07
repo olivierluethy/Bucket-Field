@@ -192,7 +192,7 @@
              : `The bot found all ${K} first (${state.youFound} to you).`,
       [
         { label: "Rematch", kind: "primary", onClick: () => location.reload() },
-        { label: "Menu", kind: "ghost", onClick: () => (location.href = "../../index.html") },
+        { label: "Menu", kind: "ghost", onClick: () => (location.href = "/") },
       ]);
   }
 

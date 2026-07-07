@@ -203,7 +203,7 @@
     banner(el.banner, "Game over", "bad");
     overlay("Game Over", `Final score ${state.score} · best ${state.best}`, [
       { label: "Play again", kind: "primary", onClick: () => { Object.assign(state, { level: 1, score: 0, streak: 1, lives: 3 }); newRound(); } },
-      { label: "Menu", kind: "ghost", onClick: () => (location.href = "../../index.html") },
+      { label: "Menu", kind: "ghost", onClick: () => (location.href = "/") },
     ]);
   }
 
