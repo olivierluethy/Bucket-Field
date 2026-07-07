@@ -1,170 +1,269 @@
-const express = require('express');
-const http = require('http');
-const socketIO = require('socket.io');
-const path = require('path');
+/* ============================================================
+   GRID// server — authoritative real-time multiplayer.
+
+   The server owns ALL game state. Clients never trust each other:
+   every probe is validated here, hits/proximity are computed here,
+   and after each change every connected player is sent a full
+   per-player snapshot. That makes the two clients impossible to
+   desync and makes reconnection trivial (just re-send the snapshot).
+
+   Game: Deduction Duel — each player hides K treasures on an S×S
+   grid; players alternate probing; each probe returns hit + a
+   proximity clue (treasures among the 8 neighbours). First to find
+   all K wins.
+   ============================================================ */
+const express = require("express");
+const http = require("http");
+const crypto = require("crypto");
+const path = require("path");
+const socketIO = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-const port = 3000; // Choose an appropriate port
+const PORT = process.env.PORT || 3000;
+const SIZE = 8;
+const K = 10;
+const RECONNECT_GRACE_MS = 45000;
 
-// Object to store selected fields for each player
-const selectedFields = {};
+/** @type {Map<string, Room>} */
+const rooms = new Map();
 
-// Object to store guessed fields for each player
-const guessedFields = {};
-
-const playerSockets = {};
-
-let playerSelectedCount = {};
-
-io.on('connection', (socket) => {
-  const playerId = socket.id; // Generate a unique ID for the player
-
-  // Spieler-ID und zugehörige Socket-ID speichern
-  playerSockets[playerId] = socket;
-
-  console.log(`Spieler mit ID ${playerId} hat eine Verbindung hergestellt.`);
-
-
-  socket.on("send-field", (fieldId) => {
-    // Broadcast the selected field to all other players
-    // socket.broadcast.emit("receive-field", fieldId);
-  
-    // Store the selected field for the player
-    if (!selectedFields[socket.id]) {
-      selectedFields[socket.id] = [];
+/* ---------- grid helpers (authoritative) ---------- */
+function neighbors(i) {
+  const r = Math.floor(i / SIZE), c = i % SIZE, out = [];
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nc >= 0 && nr < SIZE && nc < SIZE) out.push(nr * SIZE + nc);
     }
-    selectedFields[socket.id].push(fieldId);
-    playerSelectedCount[socket.id]++;
+  return out;
+}
+function proximity(treasureSet, i) {
+  return neighbors(i).filter((n) => treasureSet.has(n)).length;
+}
+function validTreasures(list) {
+  if (!Array.isArray(list) || list.length !== K) return null;
+  const set = new Set();
+  for (const v of list) {
+    const i = Number(v);
+    if (!Number.isInteger(i) || i < 0 || i >= SIZE * SIZE || set.has(i)) return null;
+    set.add(i);
+  }
+  return set;
+}
 
-    if (playerSelectedCount[socket.id] === 10) {
-      socket.emit("playerReady");
-    }
-  
-    console.log(socket.id + " selected: " + fieldId);
-    console.log("Selected fields:", selectedFields[socket.id]);
+function makeCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+  let code;
+  do {
+    code = Array.from(crypto.randomBytes(4))
+      .map((b) => alphabet[b % alphabet.length])
+      .join("");
+  } while (rooms.has(code));
+  return code;
+}
+
+/* ---------- room model ---------- */
+function newPlayer(pid, name) {
+  return {
+    pid,
+    name: (name || "Player").toString().slice(0, 16),
+    socketId: null,
+    connected: false,
+    treasures: null,      // Set<number> once placed
+    ready: false,
+    guesses: new Map(),   // index -> {hit, prox}  (probes this player made on the opponent)
+    found: 0,
+  };
+}
+
+function opponentOf(room, pid) {
+  const other = room.order.find((p) => p !== pid);
+  return other ? room.players[other] : null;
+}
+
+function snapshotFor(room, pid) {
+  const me = room.players[pid];
+  const opp = opponentOf(room, pid);
+  const mapProbes = (g) => [...g.entries()].map(([index, v]) => ({ index, hit: v.hit, prox: v.prox }));
+  return {
+    code: room.code,
+    size: SIZE,
+    K,
+    phase: room.phase,
+    winner: room.winner,
+    you: pid,
+    yourTurn: room.turn === pid,
+    me: {
+      name: me.name,
+      ready: me.ready,
+      found: me.found,
+      placed: me.treasures ? me.treasures.size : 0,
+      treasures: me.treasures ? [...me.treasures] : [],
+    },
+    opponent: opp
+      ? { name: opp.name, connected: opp.connected, ready: opp.ready, found: opp.found, joined: true }
+      : { joined: false },
+    // probes the OPPONENT made against me -> render on my grid
+    myGrid: opp ? mapProbes(opp.guesses) : [],
+    // probes I made against the opponent -> render on the enemy grid
+    enemyGrid: mapProbes(me.guesses),
+  };
+}
+
+function pushState(room) {
+  for (const pid of room.order) {
+    const p = room.players[pid];
+    if (p.connected && p.socketId) io.to(p.socketId).emit("state", snapshotFor(room, pid));
+  }
+}
+
+function maybeStart(room) {
+  if (room.order.length === 2 && room.order.every((pid) => room.players[pid].ready)) {
+    room.phase = "playing";
+    room.turn = room.order[Math.floor(Math.random() * 2)];
+  }
+}
+
+function cleanupRoom(room) {
+  if (room.destroyTimer) clearTimeout(room.destroyTimer);
+  rooms.delete(room.code);
+}
+
+/* ---------- socket wiring ---------- */
+io.on("connection", (socket) => {
+  let boundCode = null;
+  let boundPid = null;
+
+  function bind(room, pid) {
+    boundCode = room.code;
+    boundPid = pid;
+    const p = room.players[pid];
+    p.socketId = socket.id;
+    p.connected = true;
+    if (p.disconnectTimer) { clearTimeout(p.disconnectTimer); p.disconnectTimer = null; }
+  }
+
+  socket.on("create", ({ name, token } = {}, ack) => {
+    const pid = (token || crypto.randomUUID()).toString();
+    const code = makeCode();
+    const room = {
+      code, phase: "lobby", turn: null, winner: null,
+      order: [pid], players: { [pid]: newPlayer(pid, name) },
+    };
+    rooms.set(code, room);
+    bind(room, pid);
+    ack && ack({ ok: true, code, pid });
+    pushState(room);
   });
 
-  socket.on("remove-field", (fieldId) => {
-    // Remove the selected field for the player
-    if (selectedFields[socket.id]) {
-        const index = selectedFields[socket.id].indexOf(fieldId);
-        if (index > -1) {
-            selectedFields[socket.id].splice(index, 1);
-            console.log(socket.id + " deletes: " + fieldId);
-            console.log("Selected fields:", selectedFields[socket.id]);
-            playerSelectedCount[socket.id]--;
-        }
-    }
-})
+  socket.on("join", ({ code, name, token } = {}, ack) => {
+    code = (code || "").toString().toUpperCase().trim();
+    const room = rooms.get(code);
+    const pid = (token || crypto.randomUUID()).toString();
+    if (!room) return ack && ack({ ok: false, error: "Room not found" });
 
-  // Handle game events here
-  socket.on('selectField', (fieldId) => {
-    // Store the selected field for the player
-    if (!selectedFields[playerId]) {
-      selectedFields[playerId] = [];
+    // rejoin (same token already in room)
+    if (room.players[pid]) {
+      bind(room, pid);
+      ack && ack({ ok: true, code, pid, rejoined: true });
+      pushState(room);
+      io.to(room.code).emit("event", { kind: "opponentReturned" });
+      return;
     }
-    selectedFields[playerId].push(fieldId);
-  
-    // Check if both players have finished selecting their fields
-    const playerIds = Object.keys(selectedFields);
-    if (playerIds.length === 2 && selectedFields[playerIds[0]].length === 10 && selectedFields[playerIds[1]].length === 10) {
-      // Broadcast the selected fields to both players
-      const player1Fields = selectedFields[playerIds[0]];
-      const player2Fields = selectedFields[playerIds[1]];
-      io.to(playerIds[0]).emit('opponentFields', player2Fields);
-      io.to(playerIds[1]).emit('opponentFields', player1Fields);
-    } else if (playerIds.length === 2 && selectedFields[playerId].length === 10) {
-      // Emit an event to the player who has finished selecting
-      socket.emit('waitForOpponent', playerId);
-    } else {
-      // Emit an event to the player who is still selecting
-      socket.emit('continueSelection');
-    }
-  });  
+    if (room.order.length >= 2) return ack && ack({ ok: false, error: "Room is full" });
 
-  // Add more events to control the game
-  socket.on('guessField', (fieldId) => {
-    // Store the guessed field for the player
-    if (!guessedFields[playerId]) {
-      guessedFields[playerId] = [];
-    }
-    guessedFields[playerId].push(fieldId);
-  
-    // Check if the current player has found all 10 fields
-    if (guessedFields[playerId].length === 10) {
-      socket.emit('playerWin'); // Notify the player that they have won
-      socket.broadcast.emit('opponentWin'); // Notify the opponent that the player has won
-      // You can perform any additional actions here, such as ending the game or displaying a victory message
-    } else {
-      // The player has not yet found all 10 fields, continue the game
-      socket.broadcast.emit('guessSelected', fieldId);
-    }
+    room.players[pid] = newPlayer(pid, name);
+    room.order.push(pid);
+    if (room.phase === "lobby") room.phase = "placing";
+    bind(room, pid);
+    ack && ack({ ok: true, code, pid });
+    pushState(room);
   });
 
-  socket.on("playerWin", () =>{
-    alert("A player won this game!");
-  })
+  socket.on("place", ({ treasures } = {}, ack) => {
+    const room = rooms.get(boundCode);
+    if (!room || !boundPid) return;
+    if (room.phase !== "placing" && room.phase !== "lobby") return ack && ack({ ok: false, error: "Not in setup" });
+    const set = validTreasures(treasures);
+    if (!set) return ack && ack({ ok: false, error: "Place exactly " + K + " distinct treasures" });
+    const p = room.players[boundPid];
+    p.treasures = set;
+    p.ready = true;
+    ack && ack({ ok: true });
+    maybeStart(room);
+    pushState(room);
+  });
 
-  // socket.on("playerReady", function(selectedFields) {
-  //   if (selectedFields.length === 10) {
-  //     socket.emit("playerComplete"); // Notify the server that the player has completed the selection
-  //   }
-  // });
-  socket.on("playerReady", () => {
-    socket.emit("enableReadyButton", { playerId: socket.id });
+  socket.on("fire", ({ index } = {}, ack) => {
+    const room = rooms.get(boundCode);
+    if (!room || room.phase !== "playing") return ack && ack({ ok: false, error: "Not playing" });
+    if (room.turn !== boundPid) return ack && ack({ ok: false, error: "Not your turn" });
+    const i = Number(index);
+    if (!Number.isInteger(i) || i < 0 || i >= SIZE * SIZE) return ack && ack({ ok: false, error: "Bad cell" });
+    const me = room.players[boundPid];
+    if (me.guesses.has(i)) return ack && ack({ ok: false, error: "Already probed" });
+    const opp = opponentOf(room, boundPid);
+    if (!opp || !opp.treasures) return ack && ack({ ok: false, error: "Opponent not ready" });
 
-    // Check if both players are ready
-    const playerIds = Object.keys(selectedFields);
-    if (playerIds.length === 2) {
-      io.emit("playersReady"); // Notify both players that they are ready to start the game
+    const hit = opp.treasures.has(i);
+    const prox = proximity(opp.treasures, i);
+    me.guesses.set(i, { hit, prox });
+    if (hit) me.found++;
+
+    if (me.found >= K) { room.phase = "over"; room.winner = boundPid; }
+    else room.turn = opp.pid;
+
+    ack && ack({ ok: true });
+    pushState(room);
+  });
+
+  socket.on("rematch", () => {
+    const room = rooms.get(boundCode);
+    if (!room) return;
+    room.players[boundPid].rematch = true;
+    if (room.order.length === 2 && room.order.every((pid) => room.players[pid].rematch)) {
+      for (const pid of room.order) {
+        const p = room.players[pid];
+        p.treasures = null; p.ready = false; p.guesses = new Map(); p.found = 0; p.rematch = false;
+      }
+      room.phase = "placing"; room.turn = null; room.winner = null;
     }
+    pushState(room);
+  });
+
+  socket.on("leave", () => handleGone(true));
+  socket.on("disconnect", () => handleGone(false));
+
+  function handleGone(intentional) {
+    const room = rooms.get(boundCode);
+    if (!room || !boundPid) return;
+    const p = room.players[boundPid];
+    if (!p) return;
+    p.connected = false;
+    p.socketId = null;
+
+    io.to(room.code).emit("event", { kind: "opponentLeft", grace: Math.round(RECONNECT_GRACE_MS / 1000) });
+    pushState(room);
+
+    const finalize = () => {
+      // if opponent already left too, destroy the room
+      const anyConnected = room.order.some((pid) => room.players[pid].connected);
+      if (!anyConnected) return cleanupRoom(room);
+      if (room.phase === "playing") { room.phase = "over"; room.winner = opponentOf(room, boundPid)?.pid || null; }
+      pushState(room);
+    };
+
+    if (intentional) finalize();
+    else p.disconnectTimer = setTimeout(finalize, RECONNECT_GRACE_MS);
+  }
 });
 
-socket.on("playersReady", () => {
-  // Perform any actions to start the game or display a message
-  alert("Both players have completed the selection. The game is starting!");
-});
-  
-  socket.on("opponentReady", function(opponentSelectedFields) {
-    if (opponentSelectedFields.length === 10) {
-      socket.emit("opponentComplete"); // Notify the server that the opponent has completed the selection
-    }
-  });
-  
-  socket.on("playerComplete", function() {
-    // Display a message or perform any actions to indicate that the player has completed the selection
-    socket.emit("sendAlert", { playerId: socket.id, message: "You have completed the selection\nYour opponent is still selecting!" });
+/* ---------- static hosting ---------- */
+app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-    // Check if both players have completed the selection
-    const playerIds = Object.keys(selectedFields);
-    if (playerIds.length === 2) {
-      // Both players have completed the selection, you can perform further actions here
-    }
-  });
-  
-  socket.on("opponentComplete", function () {
-    // Display a message or perform any actions to indicate that the opponent has completed the selection
-    socket.broadcast.emit("opponentComplete"); // Notify the opponent that the player has completed the selection
-  });
-  
-  socket.on('disconnect', () => {
-    console.log(`Spieler mit ID ${playerId} hat die Verbindung getrennt.`);
-    // Remove the player's selected fields from the storage
-    delete playerSockets[playerId];
-  });
-});
-
-// Set up a static file server
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Route handler for the homepage
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-server.listen(port, () => {
-  console.log(`Server is listening on port ${port}.`);
-});
+server.listen(PORT, () => console.log(`GRID// server listening on http://localhost:${PORT}`));

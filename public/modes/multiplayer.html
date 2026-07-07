@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <title>GRID// Multiplayer</title>
+</head>
+<body>
+  <div class="stage">
+    <div class="topbar">
+      <a class="btn ghost" href="../../index.html">◄ Menu</a>
+      <div class="brand">GRID<b>//</b> VERSUS</div>
+      <span class="pill" id="connPill">Connecting…</span>
+    </div>
+
+    <!-- LOBBY -->
+    <section id="lobby" class="panel" style="max-width:520px;margin:24px auto;text-align:center;">
+      <h2 style="margin-bottom:6px;">Play a friend</h2>
+      <p class="muted" style="margin-top:0;">Create a session and share the link, or join with a code.</p>
+      <div style="margin:18px 0;">
+        <input class="field" id="nameInput" placeholder="YOUR NAME" maxlength="16" />
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="createBtn">Create session</button>
+      </div>
+      <div style="margin:22px 0 6px;color:var(--ink-dim);letter-spacing:.2em;">— OR —</div>
+      <div class="controls">
+        <input class="field" id="codeInput" placeholder="CODE" maxlength="4" />
+        <button class="btn magenta" id="joinBtn">Join</button>
+      </div>
+      <p class="bad" id="lobbyError" style="min-height:1.2em;"></p>
+    </section>
+
+    <!-- SHARE (host waiting) -->
+    <section id="share" class="panel hidden" style="max-width:520px;margin:24px auto;text-align:center;">
+      <h2>Session ready</h2>
+      <p class="muted">Send this to your opponent:</p>
+      <div class="code-box" id="shareCode">----</div>
+      <div class="controls">
+        <button class="btn" id="copyLinkBtn">Copy invite link</button>
+      </div>
+      <p class="info" id="shareStatus">Waiting for opponent to join…</p>
+    </section>
+
+    <!-- GAME -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="stat"><span class="k" id="youName">You</span><span class="v gold" id="youFound">0</span></div>
+        <div class="stat"><span class="k">Target</span><span class="v" id="targetCount">10</span></div>
+        <div class="stat"><span class="k" id="oppName">Opponent</span><span class="v magenta" id="oppFound">0</span></div>
+      </div>
+      <div class="banner info" id="banner">&nbsp;</div>
+      <div class="board-wrap">
+        <div class="board-col">
+          <div class="board-label">Your grid</div>
+          <div id="myBoard"></div>
+        </div>
+        <div class="board-col">
+          <div class="board-label">Enemy grid</div>
+          <div id="enemyBoard"></div>
+        </div>
+      </div>
+      <div class="controls" id="setupControls">
+        <button class="btn ghost" id="randomBtn">Random placement</button>
+        <button class="btn primary" id="readyBtn" disabled>Ready ►</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="../js/grid.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/multiplayer.js"></script>
+</body>
+</html>
