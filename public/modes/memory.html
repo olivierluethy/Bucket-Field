@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <title>GRID// Memory</title>
+</head>
+<body>
+  <div class="stage">
+    <div class="topbar">
+      <a class="btn ghost" href="../../index.html">◄ Menu</a>
+      <div class="brand" id="modeName">GRID<b>//</b> MEMORY</div>
+      <span class="pill" id="phasePill">Ready</span>
+    </div>
+
+    <div class="hud">
+      <div class="stat"><span class="k">Level</span><span class="v cyan" id="statLevel">1</span></div>
+      <div class="stat"><span class="k">Score</span><span class="v gold" id="statScore">0</span></div>
+      <div class="stat"><span class="k">Streak</span><span class="v lime" id="statStreak">0</span></div>
+      <div class="stat"><span class="k">Lives</span><span class="v magenta" id="statLives">♥♥♥</span></div>
+      <div class="stat"><span class="k">Best</span><span class="v" id="statBest">0</span></div>
+    </div>
+
+    <div class="banner info" id="banner">Loading…</div>
+
+    <div class="board-wrap">
+      <div class="board-col">
+        <div class="board-label" id="transformLabel">&nbsp;</div>
+        <div id="board"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn primary" id="readyBtn" disabled>Ready ►</button>
+      <button class="btn ghost" id="howBtn">How to play</button>
+    </div>
+  </div>
+
+  <script src="../js/grid.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/memory.js"></script>
+</body>
+</html>
