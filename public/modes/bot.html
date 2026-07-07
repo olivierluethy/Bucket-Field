@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <title>GRID// Deduction Duel</title>
+</head>
+<body>
+  <div class="stage">
+    <div class="topbar">
+      <a class="btn ghost" href="../../index.html">◄ Menu</a>
+      <div class="brand">GRID<b>//</b> DEDUCTION DUEL</div>
+      <span class="pill" id="turnPill">Setup</span>
+    </div>
+
+    <div class="hud">
+      <div class="stat"><span class="k">You found</span><span class="v gold" id="statYou">0</span></div>
+      <div class="stat"><span class="k">Target</span><span class="v" id="statTarget">10</span></div>
+      <div class="stat"><span class="k">Bot found</span><span class="v magenta" id="statBot">0</span></div>
+    </div>
+
+    <div class="banner info" id="banner">Place your 10 treasures on your grid.</div>
+
+    <div class="board-wrap">
+      <div class="board-col">
+        <div class="board-label">Your grid (bot hunts here)</div>
+        <div id="myBoard"></div>
+      </div>
+      <div class="board-col">
+        <div class="board-label">Enemy grid (you hunt here)</div>
+        <div id="enemyBoard"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn ghost" id="randomBtn">Random placement</button>
+      <button class="btn primary" id="startBtn" disabled>Start duel ►</button>
+      <button class="btn ghost" id="howBtn">How to play</button>
+    </div>
+  </div>
+
+  <script src="../js/grid.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/bot.js"></script>
+</body>
+</html>
